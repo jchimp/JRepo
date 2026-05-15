@@ -1,0 +1,32 @@
+# ─────────────────────────────────────────────
+#  .jrepoignore — JRepo exclusion rules
+#
+#  Pattern guide:
+#    /dirname      Directory  (leading /)
+#    dirname/      Directory  (trailing /)
+#    *.ext         Extension / wildcard file
+#    name.ext      Specific file (has a dot)
+#    name          Ambiguous -> excluded as both dir AND file
+# ─────────────────────────────────────────────
+
+# Extensions
+*.pyc
+*.log
+*.tmp
+*~
+*.old
+
+# Directories
+/data
+/junk
+/.git
+/.vscode
+
+# Ambiguous (excluded as both file and directory)
+__pycache__
+node_modules
+.venv
+
+# Specific files
+single.file
+.env

@@ -1,0 +1,51 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.env/
+ENV/
+.venv/
+
+# Distribution / builds
+build/
+dist/
+*.egg-info/
+
+# ===== Flask =====
+instance/
+*.log
+
+# ===== Testing =====
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Docker =====
+*.log
+*.pid
+*.tar
+docker-compose.override.yml
+
+# ===== Env / secrets =====
+.env
+.env.*
+*.key
+*.pem
+
+# ===== IDE =====
+.vscode/
+.idea/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Temp =====
+*.tmp
+*.bak
+*.swp
+*.old
