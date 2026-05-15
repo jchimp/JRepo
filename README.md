@@ -4,7 +4,7 @@
 
 **JRepo** is my personal "repo" solution for my source code and projects. I use this personally and at work as a cheap/easy trick to 'push' up code, then 'pull' it down on the server to run in Docker.
 
-[LICENSE https://img.shields.io/badge/License-MIT-yellow.svg](LICENSE)
+[https://img.shields.io/badge/License-MIT-yellow.svg](LICENSE)
 
 ---
 
