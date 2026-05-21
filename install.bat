@@ -1,88 +1,98 @@
-@echo off
+@ECHO off
 REM -----------------------------------------------------------
 REM  jRepo Installer for Windows
 REM  Copies jRepo scripts to C:\Tools\jRepo and adds to PATH.
 REM  Run as Administrator for PATH changes to take effect.
 REM -----------------------------------------------------------
 
-set "INSTALL_DIR=C:\Tools\jRepo"
+SET "INSTALL_DIR=C:\Tools\jRepo"
 
-echo.
-echo [jrepo] ==================================================
-echo [jrepo]  jRepo Installer - Windows
-echo [jrepo] ==================================================
-echo.
+ECHO.
+ECHO [jrepo] ==================================================
+ECHO [jrepo]  jRepo Installer - Windows
+ECHO [jrepo] ==================================================
+ECHO.
 
 REM -- Check for admin privileges
-set "IS_ADMIN=0"
-net session >nul 2>&1
-if %errorlevel% equ 0 (
-    set "IS_ADMIN=1"
-    echo [jrepo] Running as Administrator.
-) else (
-    echo [jrepo] WARNING: Not running as Administrator.
-    echo [jrepo]   Scripts will be copied, but PATH will NOT be updated.
-    echo [jrepo]   Re-run as Administrator to update PATH automatically,
-    echo [jrepo]   or add %INSTALL_DIR% to your PATH manually.
-    echo.
+SET "IS_ADMIN=0"
+NET SESSION >NUL 2>&1
+IF %errorlevel% equ 0 (
+    SET "IS_ADMIN=1"
+    ECHO [jrepo] Running as Administrator.
+) ELSE (
+    ECHO [jrepo] WARNING: Not running as Administrator.
+    ECHO [jrepo]   Scripts will be copied, but PATH will NOT be updated.
+    ECHO [jrepo]   Re-run as Administrator to update PATH automatically,
+    ECHO [jrepo]   or add %INSTALL_DIR% to your PATH manually.
+    ECHO.
 )
 
 REM -- Create install directory
-if not exist "%INSTALL_DIR%" (
-    mkdir "%INSTALL_DIR%"
-    echo [jrepo] Created directory: %INSTALL_DIR%
-) else (
-    echo [jrepo] Directory exists:  %INSTALL_DIR%
+IF NOT EXIST "%INSTALL_DIR%" (
+    MKDIR "%INSTALL_DIR%"
+    ECHO [jrepo] Created directory: %INSTALL_DIR%
+) ELSE (
+    ECHO [jrepo] Directory EXISTs:  %INSTALL_DIR%
 )
 
-REM -- Copy scripts
-echo [jrepo] Copying files...
+REM -- COPY scripts
+ECHO [jrepo] COPYing files...
 
-copy /Y jrepo.ps1 "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied jrepo.ps1
-copy /Y jrepo.cmd "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied jrepo.cmd
-copy /Y jrepo.sh  "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied jrepo.sh
+COPY /Y jrepo.ps1 "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied jrepo.ps1
+COPY /Y jrepo.cmd "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied jrepo.cmd
+COPY /Y jrepo.sh  "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied jrepo.sh
 
-REM -- Copy optional files (ignore if missing)
-copy /Y README.md          "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied README.md
-copy /Y sample.jrepoignore "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied sample.jrepoignore
-copy /Y LICENSE            "%INSTALL_DIR%\" >nul 2>&1 && echo [jrepo]   Copied LICENSE
+REM -- COPY optional files (ignore IF missing)
+COPY /Y README.md          "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied README.md
+COPY /Y sample.jrepoignore "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied sample.jrepoignore
+COPY /Y LICENSE            "%INSTALL_DIR%\" >NUL 2>&1 && ECHO [jrepo]   Copied LICENSE
 
-echo.
+ECHO.
 
-REM -- Update PATH
-echo "%PATH%" | findstr /I /C:"%INSTALL_DIR%" >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [jrepo] PATH: %INSTALL_DIR% is already in PATH.
-) else (
-    if "%IS_ADMIN%"=="1" (
-        setx /M PATH "%PATH%;%INSTALL_DIR%" >nul 2>&1
-        if %errorlevel% equ 0 (
-            echo [jrepo] PATH: Added %INSTALL_DIR% to system PATH.
-        ) else (
-            echo [jrepo] WARNING: Failed to update PATH. Add manually:
-            echo [jrepo]   %INSTALL_DIR%
-        )
-    ) else (
-        echo [jrepo] PATH: Skipped (no admin). Add this to your PATH manually:
-        echo [jrepo]   %INSTALL_DIR%
-    )
+REM -- Update PATH (persistent + current session)
+ECHO "%PATH%" | findstr /I /C:"%INSTALL_DIR%" >nul 2>&1
+IF %errorlevel% equ 0 (
+    ECHO [jrepo] PATH: %INSTALL_DIR% is already in PATH.
+    GOTO :PATH_DONE
 )
+IF NOT "%IS_ADMIN%"=="1" (
+    ECHO [jrepo] PATH: Skipped - no admin. Add this to your PATH manually:
+    ECHO [jrepo]   %INSTALL_DIR%
+    GOTO :PATH_DONE
+)
+
+REM -- Update SYSTEM PATH (persistent)
+SETX /M PATH "%PATH%;%INSTALL_DIR%" >nul 2>&1
+
+REM -- Update CURRENT SESSION PATH (immediate use)
+SET "PATH=%PATH%;%INSTALL_DIR%"
+
+IF %errorlevel% equ 0 (
+    ECHO [jrepo] PATH: Added %INSTALL_DIR% to system PATH.
+    ECHO [jrepo] PATH: Updated current session.
+) ELSE (
+    ECHO [jrepo] WARNING: Failed to update PATH. Add manually:
+    ECHO [jrepo]   %INSTALL_DIR%
+)
+
+:PATH_DONE
+
 
 REM -- Summary
-echo.
-echo [jrepo] ==================================================
-echo [jrepo]  Installation complete!
-echo [jrepo] ==================================================
-echo [jrepo]  Location: %INSTALL_DIR%
-echo [jrepo]
-echo [jrepo]  Commands available:
-echo [jrepo]    jrepo init              Create a default .jrepoignore
-echo [jrepo]    jrepo push ^<UNC-PATH^>   Push current dir to remote path
-echo [jrepo]    jrepo pull ^<UNC-PATH^>   Pull from remote path to current dir
-echo [jrepo]    jrepo help              Show usage and flags
-echo [jrepo]
-echo [jrepo]  Open a NEW terminal for PATH changes to take effect.
-echo [jrepo] ==================================================
-echo.
+ECHO.
+ECHO [jrepo] ==================================================
+ECHO [jrepo]  Installation complete!
+ECHO [jrepo] ==================================================
+ECHO [jrepo]  Location: %INSTALL_DIR%
+ECHO [jrepo]
+ECHO [jrepo]  Commands available:
+ECHO [jrepo]    jrepo init              Create a default .jrepoignore
+ECHO [jrepo]    jrepo push ^<UNC-PATH^>   Push current dir to remote path
+ECHO [jrepo]    jrepo pull ^<UNC-PATH^>   Pull from remote path to current dir
+ECHO [jrepo]    jrepo help              Show usage and flags
+ECHO [jrepo]
+ECHO [jrepo]  Open a NEW terminal for PATH changes to take effect.
+ECHO [jrepo] ==================================================
+ECHO.
 
-pause
+PAUSE
