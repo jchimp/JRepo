@@ -1,14 +1,14 @@
-# JRepo
+# jRepo
 
 **A simple, cross-platform file sync tool for a lone developer or a small team.**
 
-**JRepo** is my personal "repo" solution for my source code and projects. I use this personally and at work as a cheap/easy trick to 'push' up code, then 'pull' it down on the server to run in Docker.
+**jRepo** is my personal "repo" solution for my source code and projects. I use this personally and at work as a cheap/easy trick to 'push' up code, then 'pull' it down on the server to run in Docker.
 
 ---
 
-## What is JRepo?
+## What is jRepo?
 
-JRepo pushes and pulls project directories to and from network shares — no git server, no config files, no dependencies beyond what's already on your OS.
+jRepo pushes and pulls project directories to and from network shares — no git server, no config files, no dependencies beyond what's already on your OS.
 
 Point it at a UNC path (Windows) or mount point (Linux), and it mirrors your current directory there. That's it.
 
@@ -43,8 +43,8 @@ install.bat
 ````
 
 This will:
-- Copy all scripts to `C:\Tools\JRepo\`
-- Add `C:\Tools\JRepo\` to your system PATH
+- Copy all scripts to `C:\Tools\jRepo\`
+- Add `C:\Tools\jRepo\` to your system PATH
 - Open a **new terminal** afterward for PATH changes to take effect
 
 ### Linux

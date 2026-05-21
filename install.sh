@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------
-#  JRepo Installer for Linux
-#  Copies jrepo script to /usr/local/bin (requires root/sudo).
+#  jRepo Installer for Linux
+#  Copies jRepo script to /usr/local/bin (requires root/sudo).
 #  Usage:  sudo ./install.sh
 # -----------------------------------------------------------
 set -euo pipefail
@@ -23,7 +23,7 @@ err()   { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_red}$*${_c_reset}" >&2; }
 
 echo ""
 info "=================================================="
-info " JRepo Installer - Linux"
+info " jRepo Installer - Linux"
 info "=================================================="
 echo ""
 

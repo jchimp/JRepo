@@ -1,15 +1,15 @@
 @echo off
 REM -----------------------------------------------------------
-REM  JRepo Installer for Windows
-REM  Copies jrepo scripts to C:\Tools\JRepo and adds to PATH.
+REM  jRepo Installer for Windows
+REM  Copies jRepo scripts to C:\Tools\jRepo and adds to PATH.
 REM  Run as Administrator for PATH changes to take effect.
 REM -----------------------------------------------------------
 
-set "INSTALL_DIR=C:\Tools\JRepo"
+set "INSTALL_DIR=C:\Tools\jRepo"
 
 echo.
 echo [jrepo] ==================================================
-echo [jrepo]  JRepo Installer - Windows
+echo [jrepo]  jRepo Installer - Windows
 echo [jrepo] ==================================================
 echo.
 
