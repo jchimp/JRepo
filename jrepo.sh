@@ -27,10 +27,18 @@ _c_yellow="\033[33m"
 _c_red="\033[31m"
 _c_gray="\033[90m"
 
-info()  { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_cyan}$*${_c_reset}"; }
-ok()    { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_green}$*${_c_reset}"; }
-warn()  { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_yellow}$*${_c_reset}"; }
-err()   { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_red}$*${_c_reset}" >&2; }
+_rule="------------------------------------------------------------"
+
+info()  { echo -e "${_c_cyan}$*${_c_reset}"; }
+ok()    { echo -e "${_c_green}$*${_c_reset}"; }
+warn()  { echo -e "${_c_yellow}$*${_c_reset}"; }
+err()   { echo -e "${_c_red}$*${_c_reset}" >&2; }
+
+# Aligned "Label   value" line (label padded so values line up).
+kv()    { info "$(printf '  %-8s %s' "$1" "$2")"; }
+
+# Header / footer wrap the (quiet) copy step.
+rule()  { info "$_rule"; }
 
 get_file_count() {
     if [[ -d "$1" ]]; then
@@ -264,7 +272,7 @@ if [[ "$COMMAND" == "init" ]]; then
     if [[ -f "$IGNORE_FILE" ]]; then
         warn ".jrepoignore already exists at:"
         warn "  $IGNORE_FILE"
-        read -rp "[jrepo] Overwrite? (y/N): " confirm
+        read -rp "Overwrite? (y/N): " confirm
         if [[ ! "$confirm" =~ ^(y|yes|Y|Yes)$ ]]; then
             info "Aborted. Existing file unchanged."
             exit 0
@@ -296,6 +304,7 @@ IGNORE_FILE="$PROJECT_DIR/.jrepoignore"
 if [[ "$COMMAND" == "push" ]]; then
     SOURCE_DIR="$PROJECT_DIR"
     DEST_DIR="$REMOTE_PATH"
+    OP="Push"
     SOURCE_LABEL="Source"
     DEST_LABEL="Target"
     SUMMARY_TITLE="Push Summary"
@@ -308,14 +317,20 @@ else
     fi
     SOURCE_DIR="$REMOTE_PATH"
     DEST_DIR="$PROJECT_DIR"
+    OP="Pull"
     SOURCE_LABEL="Source"
     DEST_LABEL="Local"
     SUMMARY_TITLE="Pull Summary"
     FORCE_TARGET="local directory"
 fi
 
-info "${SOURCE_LABEL}:  $SOURCE_DIR"
-info "${DEST_LABEL}:   $DEST_DIR"
+# -- Header
+echo ""
+rule
+info "  JRepo $OP"
+rule
+kv "${SOURCE_LABEL}:" "$SOURCE_DIR"
+kv "${DEST_LABEL}:"   "$DEST_DIR"
 
 # ===================================================================
 #  Folder-name mismatch check
@@ -329,7 +344,7 @@ if [[ "$local_folder" != "$remote_folder" ]]; then
     warn "  Local:   $PROJECT_DIR  ($local_folder)"
     warn "  Remote:  $REMOTE_PATH  ($remote_folder)"
     if [[ "$DRY_RUN" != true ]]; then
-        read -rp "[jrepo] Folder names differ. Continue? (y/N): " confirm
+        read -rp "Folder names differ. Continue? (y/N): " confirm
         if [[ ! "$confirm" =~ ^(y|yes|Y|Yes)$ ]]; then
             info "Aborted by user."
             exit 0
@@ -375,7 +390,7 @@ if [[ "$FORCE" == true ]]; then
         warn "  Then $COMMAND a fresh copy from:"
         warn "  $SOURCE_DIR"
         warn ""
-        read -rp "[jrepo] Type 'yes' to confirm, anything else to abort: " confirm
+        read -rp "Type 'yes' to confirm, anything else to abort: " confirm
         if [[ "$confirm" != "yes" ]]; then
             info "Aborted by user."
             exit 0
@@ -427,22 +442,24 @@ SOURCE_TRAIL="$SOURCE_DIR"
 # push: keep -a (perms are irrelevant to SMB/Robocopy targets).
 # pull: drop -pgo and force sane modes, otherwise a CIFS/SMB mount (which
 #       reports every file as 0755/0777) leaves all pulled files executable.
+# No -v: the per-file listing is suppressed; the summary footer reports totals.
 if [[ "$COMMAND" == "pull" ]]; then
     RSYNC_ARGS=(
-        -rltDv
+        -rltD
         --delete
         --no-perms
         --chmod=D755,F644
     )
 else
     RSYNC_ARGS=(
-        -av
+        -a
         --delete
     )
 fi
 
 if [[ "$DRY_RUN" == true ]]; then
-    RSYNC_ARGS+=(--dry-run)
+    # Verbose on dry-run so the preview shows what would change.
+    RSYNC_ARGS+=(--dry-run -v)
     warn "[DRY RUN] No files will be copied."
 fi
 
@@ -455,7 +472,7 @@ else
 fi
 
 info ""
-info "rsync running..."
+info "Syncing..."
 rsync "${RSYNC_ARGS[@]}" "$SOURCE_TRAIL" "$DEST_DIR/"
 
 # ===================================================================
@@ -468,13 +485,15 @@ end_epoch=$(date +%s)
 elapsed=$(( end_epoch - start_epoch ))
 
 echo ""
-info "-- $SUMMARY_TITLE ------------------------------------------"
-info "  ${SOURCE_LABEL}:  $SOURCE_DIR"
-info "  ${DEST_LABEL}:   $DEST_DIR"
-info "  Files:   $pre_files -> $post_files  ($(format_delta "$pre_files" "$post_files"))"
-info "  Size:    $(format_bytes "$pre_bytes") -> $(format_bytes "$post_bytes")  ($(format_delta "$pre_bytes" "$post_bytes") bytes)"
-info "  Time:    ${elapsed}s"
-info "----------------------------------------------------------"
+rule
+info "  $SUMMARY_TITLE"
+rule
+kv "${SOURCE_LABEL}:" "$SOURCE_DIR"
+kv "${DEST_LABEL}:"   "$DEST_DIR"
+kv "Files:" "$pre_files -> $post_files  ($(format_delta "$pre_files" "$post_files"))"
+kv "Size:"  "$(format_bytes "$pre_bytes") -> $(format_bytes "$post_bytes")  ($(format_delta "$pre_bytes" "$post_bytes") bytes)"
+kv "Time:"  "${elapsed}s"
+rule
 
 # ===================================================================
 #  Line-ending fix (pull only)

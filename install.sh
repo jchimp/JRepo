@@ -16,10 +16,10 @@ _c_yellow="\033[33m"
 _c_red="\033[31m"
 _c_gray="\033[90m"
 
-info()  { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_cyan}$*${_c_reset}"; }
-ok()    { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_green}$*${_c_reset}"; }
-warn()  { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_yellow}$*${_c_reset}"; }
-err()   { echo -e "${_c_gray}[jrepo]${_c_reset} ${_c_red}$*${_c_reset}" >&2; }
+info()  { echo -e "${_c_cyan}$*${_c_reset}"; }
+ok()    { echo -e "${_c_green}$*${_c_reset}"; }
+warn()  { echo -e "${_c_yellow}$*${_c_reset}"; }
+err()   { echo -e "${_c_red}$*${_c_reset}" >&2; }
 
 echo ""
 info "=================================================="

@@ -39,13 +39,22 @@ $ErrorActionPreference = "Stop"
 #  Helpers
 # ===================================================================
 
+$script:Rule = "------------------------------------------------------------"
+
 function Write-JRepo {
     param([string]$Level, [string]$Message)
     $colours = @{ INFO = "Cyan"; OK = "Green"; WARN = "Yellow"; ERR = "Red" }
     $colour = "White"
     if ($colours.ContainsKey($Level)) { $colour = $colours[$Level] }
-    Write-Host "[jrepo] " -NoNewline -ForegroundColor DarkGray
     Write-Host $Message -ForegroundColor $colour
+}
+
+function Write-Rule { Write-JRepo "INFO" $script:Rule }
+
+# Aligned "Label   value" line (label padded so values line up).
+function Write-KV {
+    param([string]$Label, [string]$Value)
+    Write-JRepo "INFO" ("  {0,-8} {1}" -f $Label, $Value)
 }
 
 function Get-DirStats {
@@ -233,7 +242,7 @@ if ($Command -eq "init") {
     if (Test-Path $IgnoreFile) {
         Write-JRepo "WARN" ".jrepoignore already exists at:"
         Write-JRepo "WARN" "  $IgnoreFile"
-        $confirm = Read-Host "[jrepo] Overwrite? (y/N)"
+        $confirm = Read-Host "Overwrite? (y/N)"
         if ($confirm -notmatch '^(y|yes)$') {
             Write-JRepo "INFO" "Aborted. Existing file unchanged."
             exit 0
@@ -262,6 +271,7 @@ $ProjectDir = (Get-Location).Path
 
 # Determine direction
 if ($Command -eq "push") {
+    $Op           = "Push"
     $SourceDir    = $ProjectDir
     $DestDir      = $RemotePath
     $SourceLabel  = "Source"
@@ -275,6 +285,7 @@ else {
         Write-JRepo "ERR" "Source path does not exist: $RemotePath"
         exit 1
     }
+    $Op           = "Pull"
     $SourceDir    = $RemotePath
     $DestDir      = $ProjectDir
     $SourceLabel  = "Source"
@@ -283,8 +294,13 @@ else {
     $ForceTarget  = "local directory"
 }
 
-Write-JRepo "INFO" "${SourceLabel}:  $SourceDir"
-Write-JRepo "INFO" "${DestLabel}:   $DestDir"
+# -- Header
+Write-Host ""
+Write-Rule
+Write-JRepo "INFO" "  JRepo $Op"
+Write-Rule
+Write-KV "${SourceLabel}:" $SourceDir
+Write-KV "${DestLabel}:"   $DestDir
 
 # ===================================================================
 #  Folder-name mismatch check
@@ -298,7 +314,7 @@ if ($localFolder -ne $remoteFolder) {
     Write-JRepo "WARN" "  Local:   $ProjectDir  ($localFolder)"
     Write-JRepo "WARN" "  Remote:  $RemotePath  ($remoteFolder)"
     if (-not $DryRun) {
-        $confirm = Read-Host "[jrepo] Folder names differ. Continue? (y/N)"
+        $confirm = Read-Host "Folder names differ. Continue? (y/N)"
         if ($confirm -notmatch '^(y|yes)$') {
             Write-JRepo "INFO" "Aborted by user."
             exit 0
@@ -377,7 +393,7 @@ if ($Force) {
         Write-JRepo "WARN" "  Then $Command a fresh copy from:"
         Write-JRepo "WARN" "  $SourceDir"
         Write-JRepo "WARN" ""
-        $confirm = Read-Host "[jrepo] Type 'yes' to confirm, anything else to abort"
+        $confirm = Read-Host "Type 'yes' to confirm, anything else to abort"
         if ($confirm -ne "yes") {
             Write-JRepo "INFO" "Aborted by user."
             exit 0
@@ -418,10 +434,17 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 #  Build Robocopy options
 # ===================================================================
 
-$dryArg = $null
+# /NP no progress, /NJH no job header, /NJS no job summary table.
+# Normal run also adds /NDL /NFL to suppress the per-file/dir listing; the
+# summary footer reports the totals. Dry-run keeps the listing so the preview
+# shows what would change.
+$roboFlags = @("/MIR", "/R:2", "/W:1", "/NP", "/NJH", "/NJS")
 if ($DryRun) {
-    $dryArg = "/L"
+    $roboFlags += "/L"
     Write-JRepo "WARN" "[DRY RUN] No files will be copied."
+}
+else {
+    $roboFlags += @("/NDL", "/NFL")
 }
 
 $xdArg = @()
@@ -436,9 +459,9 @@ if (-not $All) {
 # ===================================================================
 
 Write-JRepo "INFO" ""
-Write-JRepo "INFO" "Robocopy running..."
+Write-JRepo "INFO" "Syncing..."
 
-ROBOCOPY.exe $SourceDir $DestDir /MIR /R:2 /W:1 /NP /NDL /NFL /NJH $dryArg @xdArg @xfArg
+ROBOCOPY.exe $SourceDir $DestDir @roboFlags @xdArg @xfArg
 
 $roboExit = $LASTEXITCODE
 $stopwatch.Stop()
@@ -458,13 +481,15 @@ $preSize  = Format-Bytes $preStats.Bytes
 $postSize = Format-Bytes $postStats.Bytes
 
 Write-Host ""
-Write-JRepo "INFO" "-- $SummaryTitle ------------------------------------------"
-Write-JRepo "INFO" "  ${SourceLabel}:  $SourceDir"
-Write-JRepo "INFO" "  ${DestLabel}:   $DestDir"
-Write-JRepo "INFO" "  Files:   $($preStats.Files) -> $($postStats.Files)  `($fileDelta`)"
-Write-JRepo "INFO" "  Size:    $preSize -> $postSize  `($bytesDelta bytes`)"
-Write-JRepo "INFO" "  Time:    ${elapsed}s"
-Write-JRepo "INFO" "----------------------------------------------------------"
+Write-Rule
+Write-JRepo "INFO" "  $SummaryTitle"
+Write-Rule
+Write-KV "${SourceLabel}:" $SourceDir
+Write-KV "${DestLabel}:"   $DestDir
+Write-KV "Files:" "$($preStats.Files) -> $($postStats.Files)  ($fileDelta)"
+Write-KV "Size:"  "$preSize -> $postSize  ($bytesDelta bytes)"
+Write-KV "Time:"  "${elapsed}s"
+Write-Rule
 
 if ($roboExit -lt 8) {
     if ($DryRun) { Write-JRepo "WARN" "[DRY RUN] Complete - no changes were made." }
