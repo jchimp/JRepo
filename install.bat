@@ -32,7 +32,7 @@ IF NOT EXIST "%INSTALL_DIR%" (
     MKDIR "%INSTALL_DIR%"
     ECHO [jrepo] Created directory: %INSTALL_DIR%
 ) ELSE (
-    ECHO [jrepo] Directory EXISTs:  %INSTALL_DIR%
+    ECHO [jrepo] Directory exists:  %INSTALL_DIR%
 )
 
 REM -- COPY scripts
@@ -61,13 +61,12 @@ IF NOT "%IS_ADMIN%"=="1" (
     GOTO :PATH_DONE
 )
 
-REM -- Update SYSTEM PATH (persistent)
+REM -- Update SYSTEM PATH (persistent). Check SETX result BEFORE the SET below,
+REM    since SET always resets errorlevel to 0 and would mask a SETX failure.
 SETX /M PATH "%PATH%;%INSTALL_DIR%" >nul 2>&1
-
-REM -- Update CURRENT SESSION PATH (immediate use)
-SET "PATH=%PATH%;%INSTALL_DIR%"
-
 IF %errorlevel% equ 0 (
+    REM -- Update CURRENT SESSION PATH (immediate use)
+    SET "PATH=%PATH%;%INSTALL_DIR%"
     ECHO [jrepo] PATH: Added %INSTALL_DIR% to system PATH.
     ECHO [jrepo] PATH: Updated current session.
 ) ELSE (

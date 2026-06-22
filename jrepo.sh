@@ -91,6 +91,30 @@ fix_line_endings() {
     fi
 }
 
+# After a pull, files land as 644 (see --chmod above). Restore the execute bit
+# on real scripts: anything named *.sh / *.bash, or whose first two bytes are
+# a shebang (#!).
+restore_exec_bits() {
+    local dir="$1"
+    local marked=0
+
+    while IFS= read -r -d '' f; do
+        case "$f" in
+            *.sh|*.bash) chmod +x "$f"; marked=$((marked + 1)); continue ;;
+        esac
+        if [[ "$(head -c2 "$f" 2>/dev/null)" == '#!' ]]; then
+            chmod +x "$f"
+            marked=$((marked + 1))
+        fi
+    done < <(find "$dir" -type f -print0 2>/dev/null)
+
+    if (( marked > 0 )); then
+        info "Exec bits: marked $marked script(s) executable."
+    else
+        info "Exec bits: no scripts found."
+    fi
+}
+
 show_help() {
     info ""
     info "  JRepo - A dead-simple file sync tool"
@@ -112,6 +136,9 @@ show_help() {
     info "    --force     Wipe destination first (prompts to confirm)"
     info "    --dry-run   Preview only, no changes made"
     info "    --no-eol    Skip CRLF->LF fix (pull only)"
+    info ""
+    info "  Pull normalizes perms to 644 (dirs 755) and re-marks"
+    info "  scripts (*.sh / shebang) executable."
     info ""
 }
 
@@ -270,9 +297,9 @@ if [[ "$COMMAND" == "push" ]]; then
     SOURCE_DIR="$PROJECT_DIR"
     DEST_DIR="$REMOTE_PATH"
     SOURCE_LABEL="Source"
-    DEST_LABEL="Dest"
+    DEST_LABEL="Target"
     SUMMARY_TITLE="Push Summary"
-    FORCE_TARGET="destination"
+    FORCE_TARGET="target"
 else
     # pull — verify remote exists
     if [[ ! -d "$REMOTE_PATH" ]]; then
@@ -397,10 +424,22 @@ SOURCE_TRAIL="$SOURCE_DIR"
 #  Build & run rsync
 # ===================================================================
 
-RSYNC_ARGS=(
-    -av
-    --delete
-)
+# push: keep -a (perms are irrelevant to SMB/Robocopy targets).
+# pull: drop -pgo and force sane modes, otherwise a CIFS/SMB mount (which
+#       reports every file as 0755/0777) leaves all pulled files executable.
+if [[ "$COMMAND" == "pull" ]]; then
+    RSYNC_ARGS=(
+        -rltDv
+        --delete
+        --no-perms
+        --chmod=D755,F644
+    )
+else
+    RSYNC_ARGS=(
+        -av
+        --delete
+    )
+fi
 
 if [[ "$DRY_RUN" == true ]]; then
     RSYNC_ARGS+=(--dry-run)
@@ -448,6 +487,9 @@ if [[ "$COMMAND" == "pull" ]] && [[ "$DRY_RUN" != true ]]; then
         info "Checking line endings..."
         fix_line_endings "$DEST_DIR"
     fi
+
+    info "Restoring execute bits on scripts..."
+    restore_exec_bits "$DEST_DIR"
 fi
 
 # ===================================================================

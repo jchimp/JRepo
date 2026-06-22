@@ -2,7 +2,7 @@
 
 **A simple, cross-platform file sync tool for a lone developer or a small team.**
 
-**JRepo** is my personal "repo" solution for my source code and projects. I use this personally and at work as a cheap/easy trick to 'push' up code, then 'pull' it down on the server to run. It's because I am laxy and didn't want to remember `Robocopy` or `rsync` commands and fix line endings.
+**JRepo** is my personal "repo" solution for my source code and projects. I use this personally and at work as a cheap/easy trick to 'push' up code, then 'pull' it down on the server to run. It's because I am lazy and didn't want to remember `Robocopy` or `rsync` commands and fix line endings.
 
 ---
 
@@ -12,11 +12,11 @@ JRepo pushes and pulls project directories to and from network shares — no git
 
 Point it at a UNC path (Windows) or mount point (Linux), and it mirrors your current directory there. That's it.
 
-Built for the part time dev who:
+Built for the part-time dev who needs to:
 - Deploy code to servers via NAS / SMB shares
 - Sync projects between machines without setting up git remotes
-- Need a quick "push up, pull down" workflow for Docker hosts
-- Want something simpler than rsync flags and robocopy switches to remember
+- Run a quick "push up, pull down" workflow for Docker hosts
+- Skip remembering rsync flags and robocopy switches
 
 ---
 
@@ -27,6 +27,7 @@ Built for the part time dev who:
 - **Pull** from a network share or mount point into any directory
 - **Folder name mismatch detection** — warns you if local and remote folder names don't match
 - **Automatic CRLF → LF fix** on Linux pull (safe — only touches text files)
+- **Sane permissions on Linux pull** — files normalized to `644` (dirs `755`); scripts (`*.sh` or shebang `#!`) get `+x` automatically, so a SMB/CIFS mount won't leave everything executable
 - **`.jrepoignore`** for excluding files and directories (like `.gitignore`)
 - **`jrepo init`** to create a default `.jrepoignore` with defaults
 
@@ -40,7 +41,7 @@ Run `install.bat` **as Administrator** (right-click → Run as administrator):
 
 ```
 install.bat
-````
+```
 
 This will:
 - Copy all scripts to `C:\Tools\JRepo\`
@@ -51,7 +52,7 @@ This will:
 
 ```bash
 sudo ./install.sh
-````
+```
 
 This will:
 *   Copy scripts to `/usr/local/bin/` (with `.sh` extension removed)
@@ -63,7 +64,12 @@ This will:
 Just copy the scripts to any directory in your PATH:
 
 - **Windows:** Copy all `.cmd` and `.ps1` files to a folder, then add that folder to your PATH.
-- **Linux:** Copy the `.sh` files, drop the extension, and `chmod +x`:
+- **Linux:** Copy the `.sh` file, drop the extension, and `chmod +x`:
+
+  ```bash
+  sudo cp jrepo.sh /usr/local/bin/jrepo
+  sudo chmod +x /usr/local/bin/jrepo
+  ```
 
 ***
 
@@ -139,6 +145,8 @@ Mirrors a remote path **into** the current directory.
 | `--no-eol`  | Skip the automatic CRLF → LF line-ending fix (Linux only)                         |
 
 > **Note:** The `--no-eol` flag is only available in the Linux (bash) version of `jrepo pull`. The Windows version does not perform line-ending conversion.
+
+> **Permissions (Linux pull):** Files are normalized to `644` and directories to `755`, regardless of how the source mount reports them. Scripts — anything named `*.sh`/`*.bash` or starting with a `#!` shebang — are then made executable. This avoids the common SMB/CIFS problem where every pulled file ends up with the execute bit set.
 
 **Examples:**
 

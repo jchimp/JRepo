@@ -2,27 +2,34 @@
 .SYNOPSIS
     JRepo - A dead-simple file sync tool for developers.
 
-.USAGE
-    jrepo push <UNC-PATH> [--all] [--force] [--dry-run]
-    jrepo pull <UNC-PATH> [--all] [--force] [--dry-run]
-    jrepo init
-    jrepo help
+.DESCRIPTION
+    Usage:
+        jrepo push <UNC-PATH> [--all] [--force] [--dry-run]
+        jrepo pull <UNC-PATH> [--all] [--force] [--dry-run]
+        jrepo init
+        jrepo help
 
-.COMMANDS
-    push    Mirror the current directory TO a remote path (Robocopy /MIR)
-    pull    Mirror a remote path INTO the current directory (Robocopy /MIR)
-    init    Create a default .jrepoignore in the current directory
-    help    Show this help message
+    Commands:
+        push    Mirror the current directory TO a remote path (Robocopy /MIR)
+        pull    Mirror a remote path INTO the current directory (Robocopy /MIR)
+        init    Create a default .jrepoignore in the current directory
+        help    Show this help message
 
-.FLAGS
-    --all       Sync ALL files; ignore .jrepoignore exclusions
-    --force     Wipe destination first, then sync clean (prompts 'yes' to confirm)
-    --dry-run   Preview only - no files are copied or deleted
+    Flags:
+        --all       Sync ALL files; ignore .jrepoignore exclusions
+        --force     Wipe destination first, then sync clean (prompts 'yes' to confirm)
+        --dry-run   Preview only - no files are copied or deleted
 
-.EXAMPLES
+.EXAMPLE
     jrepo push \\nas01\repos\myapp
+
+.EXAMPLE
     jrepo push \\nas01\repos\myapp --dry-run
+
+.EXAMPLE
     jrepo pull \\nas01\repos\myapp --force
+
+.EXAMPLE
     jrepo init
 #>
 
