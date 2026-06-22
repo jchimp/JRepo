@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/jchimp/jrepo/compare/v0.1.0...v0.1.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* Update install script ([1905e5a](https://github.com/jchimp/jrepo/commit/1905e5a055148c5a89ee55c736ba30e4454d7735))
+
 ## [0.1.0](https://github.com/jchimp/JRepo/compare/v0.0.4...v0.1.0) (2026-05-15)
 
 
