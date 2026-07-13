@@ -168,14 +168,14 @@ write_default_ignore() {
 
 # Python
 *.pyc
-__pycache__
+/__pycache__
 
 # Node
-node_modules
+/node_modules
 
 # Virtual environments
-.venv
-venv
+/.venv
+/venv
 
 # Environment / secrets
 .env

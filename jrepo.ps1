@@ -136,10 +136,10 @@ function Write-DefaultIgnore {
 
 # Python
 *.pyc
-__pycache__
+/__pycache__
 
 # Node
-node_modules
+/node_modules
 
 # Virtual environments
 /.venv
