@@ -142,8 +142,8 @@ __pycache__
 node_modules
 
 # Virtual environments
-.venv
-venv
+/.venv
+/venv
 
 # Environment / secrets
 .env
