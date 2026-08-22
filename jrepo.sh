@@ -58,12 +58,18 @@ get_dir_bytes() {
     fi
 }
 
+# Two-decimal fixed-point via integer math; bc is absent on minimal
+# systems (e.g. RasPiOS Lite).
+format_scaled() {
+    printf '%d.%02d %s' $(( $1 / $2 )) $(( ($1 % $2) * 100 / $2 )) "$3"
+}
+
 format_bytes() {
     local bytes="$1"
-    if   (( bytes >= 1073741824 )); then echo "$(echo "scale=2; $bytes / 1073741824" | bc) GB"
-    elif (( bytes >= 1048576 ));    then echo "$(echo "scale=2; $bytes / 1048576"    | bc) MB"
-    elif (( bytes >= 1024 ));       then echo "$(echo "scale=2; $bytes / 1024"       | bc) KB"
-    else                                 echo "${bytes} B"
+    if   (( bytes >= 1073741824 )); then format_scaled "$bytes" 1073741824 GB
+    elif (( bytes >= 1048576 ));    then format_scaled "$bytes" 1048576 MB
+    elif (( bytes >= 1024 ));       then format_scaled "$bytes" 1024 KB
+    else                                 printf '%s B' "$bytes"
     fi
 }
 
@@ -77,25 +83,21 @@ format_delta() {
 
 fix_line_endings() {
     local dir="$1"
-    local scanned=0
     local fixed=0
+    local f
 
+    # One recursive grep sweep (-I skips binaries) instead of a
+    # file(1)+grep fork per file, which takes minutes on small SBCs.
     while IFS= read -r -d '' f; do
-        local mime
-        mime=$(file -b --mime-type "$f" 2>/dev/null || true)
-        if [[ "$mime" == text/* ]]; then
-            scanned=$((scanned + 1))
-            if grep -cP '\r$' "$f" >/dev/null 2>&1; then
-                sed -i 's/\r$//' "$f"
-                fixed=$((fixed + 1))
-            fi
-        fi
-    done < <(find "$dir" -type f -print0 2>/dev/null)
+        sed -i 's/\r$//' "$f"
+        fixed=$((fixed + 1))
+    # -U: read as binary so MSYS/Git-Bash grep can't strip CRs before matching.
+    done < <(grep -rIlZUP --exclude-dir=.git '\r$' "$dir" 2>/dev/null || true)
 
     if (( fixed > 0 )); then
-        info "Line endings: scanned $scanned text files, fixed CRLF->LF in $fixed file(s)."
+        info "Line endings: fixed CRLF->LF in $fixed file(s)."
     else
-        info "Line endings: scanned $scanned text files. All OK."
+        info "Line endings: all OK."
     fi
 }
 
@@ -105,12 +107,17 @@ fix_line_endings() {
 restore_exec_bits() {
     local dir="$1"
     local marked=0
+    local f sig
 
     while IFS= read -r -d '' f; do
         case "$f" in
             *.sh|*.bash) chmod +x "$f"; marked=$((marked + 1)); continue ;;
         esac
-        if [[ "$(head -c2 "$f" 2>/dev/null)" == '#!' ]]; then
+        # Builtin read instead of $(head -c2): no fork per file (slow on
+        # small SBCs) and no null-byte warnings on binary files.
+        sig=
+        IFS= read -rn2 sig < "$f" 2>/dev/null || true
+        if [[ "$sig" == '#!' ]]; then
             chmod +x "$f"
             marked=$((marked + 1))
         fi
